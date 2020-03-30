@@ -408,6 +408,12 @@ class Backend(ABC):
         ts_set_as_default
         """
 
+    def del_ts(self, ts: TimeSeries):
+        """OPTIONAL: Free memory associated with the TimeSeries *ts*.
+
+        The default implementation has no effect.
+        """
+
     @abstractmethod
     def check_out(self, ts: TimeSeries, timeseries_only):
         """Check out *ts* for modification.

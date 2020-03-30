@@ -120,6 +120,30 @@ def _raise_jexception(exc, msg='unhandled Java exception: '):
     raise RuntimeError(msg) from None
 
 
+class IDdict:
+    """Dictionary that stores objects by id(), rather than by reference."""
+    items = {}
+
+    # Set, get, and delete, used by JDBCBackend
+    def __setitem__(self, name, value):
+        self.items[id(name)] = value
+
+    def __getitem__(self, name):
+        return self.items[id(name)]
+
+    def __delitem__(self, name):
+        del self.items[id(name)]
+
+    # String representation for debugging
+    def __repr__(self):
+        from sys import getrefcount
+
+        result = []
+        for k, v in self.items.items():
+            result.append(f'{k}: {v} ({getrefcount(v)} refs)')
+        return '\n'.join(result)
+
+
 class JDBCBackend(CachingBackend):
     """Backend using JPype/JDBC to connect to Oracle and HyperSQLDB instances.
 
@@ -162,7 +186,7 @@ class JDBCBackend(CachingBackend):
 
     #: Mapping from ixmp.TimeSeries object to the underlying
     #: at.ac.iiasa.ixmp.Scenario object (or subclasses of either)
-    jindex = {}
+    jindex = IDdict()
 
     def __init__(self, jvmargs=None, **kwargs):
         properties = None
@@ -408,7 +432,7 @@ class JDBCBackend(CachingBackend):
     # Timeseries methods
 
     def _common_init(self, ts, klass, *args):
-        """Common code for ts_init and s_init."""
+        """Common code for init_ts and init_s."""
         method = getattr(self.jobj, 'new' + klass)
         # Create a new TimeSeries
         jobj = method(ts.model, ts.scenario, *args)
@@ -458,6 +482,9 @@ class JDBCBackend(CachingBackend):
         if isinstance(ts, Scenario):
             # Also retrieve the scheme
             ts.scheme = jobj.getScheme()
+
+    def del_ts(self, ts):
+        del self.jindex[ts]
 
     def check_out(self, ts, timeseries_only):
         try:
