@@ -205,7 +205,7 @@ def test_gc():
 
     # create a list of some Scenario objects
     scenarios = []
-    raises(RuntimeError, allocate_scenarios, 1000)
+    raises(RuntimeError, allocate_scenarios, 100000)
     max = len(scenarios)
 
     # cleanup
