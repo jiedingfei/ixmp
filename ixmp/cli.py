@@ -110,7 +110,7 @@ def solve(context):
     if not scen:
         print('Scenario not found')
         return
-    print(f'{scen.has_solution()}')
+    scen.solve()
 
 
 @main.command()
